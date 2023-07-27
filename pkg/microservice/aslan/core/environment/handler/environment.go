@@ -549,14 +549,14 @@ func SyncHelmProductRenderset(c *gin.Context) {
 }
 
 func generalRequestValidate(c *gin.Context) (string, string, error) {
-	projectName := c.Query("projectName")
+	projectName := c.Query("projectKey")
 	if projectName == "" {
-		return "", "", errors.New("projectName can't be empty")
+		return "", "", errors.New("projectKey can't be empty")
 	}
 
 	envName := c.Param("name")
 	if envName == "" {
-		return "", "", errors.New("envName can't be empty")
+		return "", "", errors.New("envKey can't be empty")
 	}
 	return projectName, envName, nil
 }

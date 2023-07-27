@@ -52,8 +52,8 @@ type WorkflowV3TaskArgs struct {
 }
 
 type OpenAPICreateCustomWorkflowTaskArgs struct {
-	WorkflowName string                      `json:"workflow_name"`
-	ProjectName  string                      `json:"project_name"`
+	WorkflowName string                      `json:"workflow_key"`
+	ProjectName  string                      `json:"project_key"`
 	Inputs       []*CreateCustomTaskJobInput `json:"inputs"`
 }
 
@@ -64,8 +64,8 @@ type CreateCustomTaskJobInput struct {
 }
 
 type OpenAPICreateProductWorkflowTaskArgs struct {
-	WorkflowName string                     `json:"workflow_name"`
-	ProjectName  string                     `json:"project_name"`
+	WorkflowName string                     `json:"workflow_key"`
+	ProjectName  string                     `json:"project_key"`
 	Input        *CreateProductTaskJobInput `json:"input"`
 }
 
@@ -611,8 +611,8 @@ type GetHelmValuesDifferenceResp struct {
 }
 
 type OpenAPIWorkflowV4ListReq struct {
-	ProjectName string `form:"projectName"`
-	ViewName    string `form:"viewName"`
+	ProjectKey string `form:"projectKey"`
+	ViewName   string `form:"viewName"`
 }
 
 type OpenAPIWorkflowListResp struct {
@@ -620,8 +620,8 @@ type OpenAPIWorkflowListResp struct {
 }
 
 type WorkflowBrief struct {
-	WorkflowName string `json:"workflow_name"`
-	DisplayName  string `json:"display_name"`
+	WorkflowName string `json:"workflow_key"`
+	DisplayName  string `json:"workflow_name"`
 	UpdateBy     string `json:"update_by"`
 	UpdateTime   int64  `json:"update_time"`
 	Type         string `json:"type"`
@@ -675,9 +675,9 @@ type OpenAPIWorkflowV4TaskListResp struct {
 }
 
 type OpenAPIWorkflowV4Task struct {
-	WorkflowName string          `json:"workflow_name"`
-	DisplayName  string          `json:"display_name"`
-	ProjectName  string          `json:"project_name"`
+	WorkflowName string          `json:"workflow_key"`
+	DisplayName  string          `json:"workflow_name"`
+	ProjectName  string          `json:"project_key"`
 	TaskID       int64           `json:"task_id"`
 	CreateTime   int64           `json:"create_time"`
 	TaskCreator  string          `json:"task_creator"`
@@ -688,8 +688,8 @@ type OpenAPIWorkflowV4Task struct {
 }
 
 type OpenAPIProductWorkflowTaskBrief struct {
-	WorkflowName string        `json:"workflow_name"`
-	ProjectName  string        `json:"project_name"`
+	WorkflowName string        `json:"workflow_key"`
+	ProjectName  string        `json:"project_key"`
 	TaskID       int64         `json:"task_id"`
 	CreateTime   int64         `json:"create_time"`
 	TaskCreator  string        `json:"task_creator"`
@@ -699,9 +699,9 @@ type OpenAPIProductWorkflowTaskBrief struct {
 }
 
 type OpenAPIProductWorkflowTaskDetail struct {
-	WorkflowName string        `json:"workflow_name"`
-	DisplayName  string        `json:"display_name,omitempty"`
-	ProjectName  string        `json:"project_name"`
+	WorkflowName string        `json:"workflow_key"`
+	DisplayName  string        `json:"workflow_name,omitempty"`
+	ProjectName  string        `json:"project_key"`
 	TaskID       int64         `json:"task_id"`
 	CreateTime   int64         `json:"create_time"`
 	TaskCreator  string        `json:"task_creator"`
@@ -763,19 +763,58 @@ type OpenAPIWorkflowTaskJob struct {
 }
 
 type OpenAPIPageParamsFromReq struct {
-	PageNum  int64 `form:"pageNum,default=1"`
-	PageSize int64 `form:"pageSize,default=10"`
+	ProjectKey string `form:"projectKey"`
+	PageNum    int64  `form:"pageNum,default=1"`
+	PageSize   int64  `form:"pageSize,default=10"`
 }
 
 type OpenAPIWorkflowViewBrief struct {
 	Name        string          `json:"name"`
-	ProjectName string          `json:"project_name"`
+	ProjectName string          `json:"project_key"`
 	UpdateTime  int64           `json:"update_time"`
 	UpdateBy    string          `json:"update_by"`
 	Workflows   []*ViewWorkflow `json:"workflows"`
 }
 
 type ViewWorkflow struct {
-	WorkflowName string `json:"workflow_name"`
-	WorkflowType string `json:"workflow_type"`
+	WorkflowName        string `json:"workflow_key"`
+	WorkflowDisplayName string `json:"workflow_name"`
+	WorkflowType        string `json:"workflow_type"`
+}
+
+type OpenAPIApproveRequest struct {
+	StageName    string `json:"stage_name"`
+	WorkflowName string `json:"workflow_key"`
+	TaskID       int64  `json:"task_id"`
+	Approve      bool   `json:"approve"`
+	Comment      string `json:"comment"`
+}
+
+type OpenAPICreateWorkflowViewReq struct {
+	ProjectName  string                       `json:"project_key"`
+	Name         string                       `json:"name"`
+	WorkflowList []*OpenAPIWorkflowViewDetail `json:"workflow_list"`
+}
+
+type OpenAPIWorkflowViewDetail struct {
+	WorkflowName        string `json:"workflow_key"`
+	WorkflowDisplayName string `json:"workflow_name"`
+	WorkflowType        string `json:"workflow_type"`
+	Enabled             bool   `json:"enabled"`
+}
+
+func (req *OpenAPICreateWorkflowViewReq) Validate() (bool, error) {
+	if req.ProjectName == "" {
+		return false, fmt.Errorf("project name cannot be empty")
+	}
+	if req.Name == "" {
+		return false, fmt.Errorf("view name cannot be empty")
+	}
+
+	for _, workflow := range req.WorkflowList {
+		if workflow.WorkflowType != "product" && workflow.WorkflowType != "custom" {
+			return false, fmt.Errorf("workflow type must be custom or product")
+		}
+	}
+	return true, nil
 }

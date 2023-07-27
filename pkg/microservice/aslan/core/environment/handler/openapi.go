@@ -82,10 +82,10 @@ func OpenAPIApplyYamlService(c *gin.Context) {
 		return
 	}
 
-	projectKey := c.Query("projectName")
+	projectKey := c.Query("projectKey")
 
 	if projectKey == "" {
-		ctx.Err = e.ErrInvalidParam.AddDesc("projectName cannot be empty")
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey cannot be empty")
 		return
 	}
 
@@ -124,7 +124,7 @@ func OpenAPIDeleteYamlServiceFromEnv(c *gin.Context) {
 	req := new(service.OpenAPIDeleteYamlServiceFromEnvReq)
 
 	if err := c.BindJSON(req); err != nil {
-		ctx.Err = e.ErrInvalidParam.AddDesc("invalid ProductTmpl json args")
+		ctx.Err = e.ErrInvalidParam.AddDesc("invalid request body")
 		return
 	}
 
@@ -135,10 +135,10 @@ func OpenAPIDeleteYamlServiceFromEnv(c *gin.Context) {
 		return
 	}
 
-	projectKey := c.Query("projectName")
+	projectKey := c.Query("projectKey")
 
 	if projectKey == "" {
-		ctx.Err = e.ErrInvalidParam.AddDesc("projectName cannot be empty")
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey cannot be empty")
 		return
 	}
 
@@ -168,7 +168,7 @@ func OpenAPIDeleteProductionYamlServiceFromEnv(c *gin.Context) {
 
 	req := new(service.OpenAPIDeleteYamlServiceFromEnvReq)
 	if err := c.BindJSON(req); err != nil {
-		ctx.Err = e.ErrInvalidParam.AddDesc("invalid ProductTmpl json args")
+		ctx.Err = e.ErrInvalidParam.AddDesc("invalid request body")
 		return
 	}
 	// input validation for OpenAPI
@@ -178,9 +178,9 @@ func OpenAPIDeleteProductionYamlServiceFromEnv(c *gin.Context) {
 		return
 	}
 
-	projectKey := c.Query("projectName")
+	projectKey := c.Query("projectKey")
 	if projectKey == "" {
-		ctx.Err = e.ErrInvalidParam.AddDesc("projectName cannot be empty")
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey cannot be empty")
 		return
 	}
 
@@ -204,9 +204,9 @@ func OpenAPIApplyProductionYamlService(c *gin.Context) {
 		return
 	}
 
-	projectKey := c.Query("projectName")
+	projectKey := c.Query("projectKey")
 	if projectKey == "" {
-		ctx.Err = e.ErrInvalidParam.AddDesc("projectName cannot be empty")
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey cannot be empty")
 		return
 	}
 
@@ -232,28 +232,28 @@ func OpenAPIApplyProductionYamlService(c *gin.Context) {
 func OpenAPIUpdateCommonEnvCfg(c *gin.Context) {
 	ctx := internalhandler.NewContext(c)
 	defer func() { internalhandler.JSONResponse(c, ctx) }()
-	log := ctx.Logger
 
 	args := new(service.OpenAPIEnvCfgArgs)
 
 	data, err := c.GetRawData()
 	if err != nil {
-		log.Errorf("UpdateCommonEnvCfg c.GetRawData() err : %v", err)
+		ctx.Err = e.ErrUpdateEnvCfg.AddErr(fmt.Errorf("failed to get request data err : %v", err))
+		return
 	}
 	if err = json.Unmarshal(data, args); err != nil {
-		log.Errorf("UpdateCommonEnvCfg json.Unmarshal err : %v", err)
+		ctx.Err = e.ErrUpdateEnvCfg.AddErr(fmt.Errorf("failed to unmarshal request data err : %v", err))
+		return
 	}
-	projectName := c.Query("projectName")
-	args.ProductName = projectName
+	projectKey := c.Query("projectKey")
+	args.ProductName = projectKey
 	if err := args.Validate(); err != nil {
-		log.Errorf("UpdateCommonEnvCfg args.Validate err : %v", err)
-		ctx.Err = err
+		ctx.Err = e.ErrUpdateEnvCfg.AddErr(fmt.Errorf("failed to validate request data err : %v", err))
 		return
 	}
 
-	internalhandler.InsertDetailedOperationLog(c, ctx.UserName, projectName, setting.OperationSceneEnv, "(OpenAPI)"+"更新", "环境配置", fmt.Sprintf("%s:%s:%s", args.EnvName, args.CommonEnvCfgType, args.Name), string(data), ctx.Logger, args.Name)
+	internalhandler.InsertDetailedOperationLog(c, ctx.UserName, projectKey, setting.OperationSceneEnv, "(OpenAPI)"+"更新", "环境配置", fmt.Sprintf("%s:%s:%s", args.EnvName, args.CommonEnvCfgType, args.Name), string(data), ctx.Logger, args.Name)
 
-	ctx.Err = service.OpenAPIUpdateCommonEnvCfg(projectName, args, ctx.UserName, ctx.Logger)
+	ctx.Err = service.OpenAPIUpdateCommonEnvCfg(projectKey, args, ctx.UserName, ctx.Logger)
 }
 
 func OpenAPIUpdateProductionCommonEnvCfg(c *gin.Context) {
@@ -273,17 +273,17 @@ func OpenAPIUpdateProductionCommonEnvCfg(c *gin.Context) {
 		ctx.Err = e.ErrUpdateEnvCfg.AddErr(msg)
 		return
 	}
-	projectName := c.Query("projectName")
-	args.ProductName = projectName
+	projectKey := c.Query("projectKey")
+	args.ProductName = projectKey
 	if err := args.Validate(); err != nil {
 		msg := fmt.Errorf("failed to validate request data err : %v", err)
 		ctx.Err = e.ErrUpdateEnvCfg.AddErr(msg)
 		return
 	}
 
-	internalhandler.InsertDetailedOperationLog(c, ctx.UserName, projectName, setting.OperationSceneEnv, "(OpenAPI)"+"更新", "生产环境配置", fmt.Sprintf("%s:%s:%s", args.EnvName, args.CommonEnvCfgType, args.Name), string(data), ctx.Logger, args.Name)
+	internalhandler.InsertDetailedOperationLog(c, ctx.UserName, projectKey, setting.OperationSceneEnv, "(OpenAPI)"+"更新", "生产环境配置", fmt.Sprintf("%s:%s:%s", args.EnvName, args.CommonEnvCfgType, args.Name), string(data), ctx.Logger, args.Name)
 
-	ctx.Err = service.OpenAPIUpdateCommonEnvCfg(projectName, args, ctx.UserName, ctx.Logger)
+	ctx.Err = service.OpenAPIUpdateCommonEnvCfg(projectKey, args, ctx.UserName, ctx.Logger)
 }
 
 func OpenAPICreateCommonEnvCfg(c *gin.Context) {
@@ -444,7 +444,7 @@ func OpenAPICreateK8sEnv(c *gin.Context) {
 		ctx.Err = err
 		return
 	}
-	args.ProjectName = c.Query("projectName")
+	args.ProjectName = c.Query("projectKey")
 	if err := args.Validate(); err != nil {
 		ctx.Err = err
 		return
@@ -484,7 +484,7 @@ func OpenAPICreateProductionEnv(c *gin.Context) {
 		ctx.Err = err
 		return
 	}
-	args.ProjectName = c.Query("projectName")
+	args.ProjectName = c.Query("projectKey")
 	args.Production = true
 	if err := args.Validate(); err != nil {
 		ctx.Err = err
@@ -721,7 +721,24 @@ func OpenAPIListEnvs(c *gin.Context) {
 	ctx := internalhandler.NewContext(c)
 	defer func() { internalhandler.JSONResponse(c, ctx) }()
 
-	ctx.Resp, ctx.Err = service.OpenAPIListEnvs(c.Query("projectName"), ctx.Logger)
+	projectKey := c.Query("projectKey")
+	if projectKey == "" {
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey is empty")
+		return
+	}
+	ctx.Resp, ctx.Err = service.OpenAPIListEnvs(projectKey, ctx.Logger)
+}
+
+func OpenAPIListProductionEnvs(c *gin.Context) {
+	ctx := internalhandler.NewContext(c)
+	defer func() { internalhandler.JSONResponse(c, ctx) }()
+
+	projectKey := c.Query("projectKey")
+	if projectKey == "" {
+		ctx.Err = e.ErrInvalidParam.AddDesc("projectKey is empty")
+		return
+	}
+	ctx.Resp, ctx.Err = service.OpenAPIListProductionEnvs(projectKey, ctx.Logger)
 }
 
 func OpenAPIRestartService(c *gin.Context) {
